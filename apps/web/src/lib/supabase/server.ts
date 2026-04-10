@@ -1,7 +1,9 @@
 import { createServerClient as createSupabaseServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-import type { Database } from '@pulse/db/types'
+import type { Database } from '@pulse/db'
+
+type CookieToSet = { name: string; value: string; options?: Record<string, unknown> }
 
 /**
  * Server-side Supabase client for Server Components, Server Actions, and Route Handlers.
@@ -22,7 +24,7 @@ export async function createServerClient() {
         getAll() {
           return cookieStore.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: CookieToSet[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)

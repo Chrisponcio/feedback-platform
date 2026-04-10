@@ -10,7 +10,7 @@ export default async function AnalyticsPage() {
   // Fetch initial aggregate metrics for the last 30 days
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [{ count: totalResponses }, { data: npsAnswers }] = await Promise.all([
+  const [{ count: totalResponses }, { data: rawNpsAnswers }] = await Promise.all([
     supabase
       .from('responses')
       .select('*', { count: 'exact', head: true })
@@ -24,8 +24,13 @@ export default async function AnalyticsPage() {
       .not('value_numeric', 'is', null),
   ])
 
+  // question_type enum filter causes Supabase TS to infer `never` — cast via unknown
+  const npsAnswers = rawNpsAnswers as unknown as Array<{ value_numeric: number | null }>
+
   // Calculate NPS score
-  const npsValues = (npsAnswers ?? []).map((a) => a.value_numeric as number)
+  const npsValues = (npsAnswers ?? [])
+    .map((a) => a.value_numeric)
+    .filter((v): v is number => v !== null)
   const promoters = npsValues.filter((v) => v >= 9).length
   const detractors = npsValues.filter((v) => v <= 6).length
   const npsScore =

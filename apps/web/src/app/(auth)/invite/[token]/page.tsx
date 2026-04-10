@@ -13,7 +13,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
   const { token } = await params
   const supabase = await createServerClient()
 
-  const { data: invitation } = await supabase
+  const { data: invitationData } = await supabase
     .from('invitations')
     .select('*, organizations(name)')
     .eq('token', token)
@@ -21,7 +21,14 @@ export default async function InvitePage({ params }: InvitePageProps) {
     .gt('expires_at', new Date().toISOString())
     .single()
 
-  if (!invitation) notFound()
+  if (!invitationData) notFound()
+
+  // The nullable filter on accepted_at causes Supabase to infer `never` — cast via unknown
+  const invitation = invitationData as unknown as {
+    email: string
+    role: string
+    organizations: { name: string } | null
+  }
 
   return (
     <>
@@ -31,7 +38,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
       <p className="mb-8 text-center text-sm text-muted-foreground">
         Join{' '}
         <span className="font-medium text-foreground">
-          {(invitation.organizations as { name: string } | null)?.name ?? 'your team'}
+          {invitation.organizations?.name ?? 'your team'}
         </span>{' '}
         on Pulse
       </p>

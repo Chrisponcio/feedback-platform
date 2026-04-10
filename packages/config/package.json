@@ -6,5 +6,10 @@
     "./eslint": "./eslint/index.js",
     "./typescript/*": "./typescript/*.json",
     "./tailwind": "./tailwind/index.js"
+  },
+  "typesVersions": {
+    "*": {
+      "typescript/*": ["./typescript/*"]
+    }
   }
 }

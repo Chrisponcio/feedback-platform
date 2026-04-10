@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import type { Json } from '@pulse/db'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 
 const answerSchema = z.object({
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest) {
         session_id,
         language,
         ip_hash: ipHash,
-        metadata: metadata ?? {},
+        metadata: (metadata ?? {}) as Record<string, string | number | boolean | null>,
       },
       { onConflict: 'session_id', ignoreDuplicates: false }
     )
@@ -130,7 +131,7 @@ export async function POST(request: NextRequest) {
     value_numeric: a.value_numeric ?? null,
     value_text: a.value_text ?? null,
     value_boolean: a.value_boolean ?? null,
-    value_json: (a.value_json as object | null) ?? null,
+    value_json: (a.value_json ?? null) as Json | null,
   }))
 
   const { error: answersError } = await supabase

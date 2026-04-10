@@ -1,5 +1,5 @@
 {
-  "extends": "@pulse/config/typescript/nextjs.json",
+  "extends": "../config/typescript/nextjs.json",
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src"

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import type { Json } from '@pulse/db'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 
 /**
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest) {
           device_type: 'kiosk',
           session_id: pending.session_id,
           language: pending.language,
-          metadata: pending.metadata ?? {},
+          metadata: (pending.metadata ?? {}) as Record<string, string | number | boolean | null>,
         },
         { onConflict: 'session_id', ignoreDuplicates: false }
       )
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
       value_numeric: a.value_numeric ?? null,
       value_text: a.value_text ?? null,
       value_boolean: a.value_boolean ?? null,
-      value_json: (a.value_json as object | null) ?? null,
+      value_json: (a.value_json ?? null) as Json | null,
     }))
 
     await supabase

@@ -1,7 +1,7 @@
 'use client'
 
 import { createBrowserClient } from '@supabase/ssr'
-import type { Database } from '@pulse/db/types'
+import type { Database } from '@pulse/db'
 
 /**
  * Singleton browser-side Supabase client for Client Components.

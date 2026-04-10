@@ -26,12 +26,23 @@ export type Database = {
           updated_at: string
           deleted_at: string | null
         }
-        Insert: Omit<
-          Database['public']['Tables']['organizations']['Row'],
-          'id' | 'created_at' | 'updated_at'
-        > &
-          Partial<Pick<Database['public']['Tables']['organizations']['Row'], 'id'>>
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          plan?: 'starter' | 'growth' | 'enterprise'
+          settings?: Json
+          custom_domain?: string | null
+          saml_config?: Json | null
+          saml_enabled?: boolean
+          max_users?: number
+          max_responses_month?: number
+          trial_ends_at?: string | null
+          subscription_id?: string | null
+          deleted_at?: string | null
+        }
         Update: Partial<Database['public']['Tables']['organizations']['Insert']>
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -44,6 +55,7 @@ export type Database = {
         }
         Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>
+        Relationships: []
       }
       organization_members: {
         Row: {
@@ -58,12 +70,18 @@ export type Database = {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<
-          Database['public']['Tables']['organization_members']['Row'],
-          'id' | 'created_at' | 'updated_at'
-        > &
-          Partial<Pick<Database['public']['Tables']['organization_members']['Row'], 'id'>>
+        Insert: {
+          id?: string
+          organization_id: string
+          user_id: string
+          role: 'owner' | 'admin' | 'manager' | 'viewer'
+          invited_by?: string | null
+          invited_at?: string | null
+          accepted_at?: string | null
+          status?: 'pending' | 'active' | 'suspended'
+        }
         Update: Partial<Database['public']['Tables']['organization_members']['Insert']>
+        Relationships: []
       }
       invitations: {
         Row: {
@@ -83,6 +101,7 @@ export type Database = {
         > &
           Partial<Pick<Database['public']['Tables']['invitations']['Row'], 'id' | 'token'>>
         Update: Partial<Database['public']['Tables']['invitations']['Insert']>
+        Relationships: []
       }
       locations: {
         Row: {
@@ -106,6 +125,7 @@ export type Database = {
         > &
           Partial<Pick<Database['public']['Tables']['locations']['Row'], 'id'>>
         Update: Partial<Database['public']['Tables']['locations']['Insert']>
+        Relationships: []
       }
       surveys: {
         Row: {
@@ -138,6 +158,7 @@ export type Database = {
         > &
           Partial<Pick<Database['public']['Tables']['surveys']['Row'], 'id'>>
         Update: Partial<Database['public']['Tables']['surveys']['Insert']>
+        Relationships: []
       }
       questions: {
         Row: {
@@ -175,6 +196,7 @@ export type Database = {
         > &
           Partial<Pick<Database['public']['Tables']['questions']['Row'], 'id'>>
         Update: Partial<Database['public']['Tables']['questions']['Insert']>
+        Relationships: []
       }
       survey_distributions: {
         Row: {
@@ -202,6 +224,7 @@ export type Database = {
             >
           >
         Update: Partial<Database['public']['Tables']['survey_distributions']['Insert']>
+        Relationships: []
       }
       responses: {
         Row: {
@@ -229,12 +252,32 @@ export type Database = {
           respondent_name: string | null
           created_at: string
         }
-        Insert: Omit<
-          Database['public']['Tables']['responses']['Row'],
-          'id' | 'started_at' | 'created_at'
-        > &
-          Partial<Pick<Database['public']['Tables']['responses']['Row'], 'id' | 'started_at'>>
+        Insert: {
+          id?: string
+          survey_id: string
+          organization_id: string
+          distribution_id?: string | null
+          location_id?: string | null
+          respondent_id?: string | null
+          is_anonymous?: boolean
+          is_complete?: boolean
+          started_at?: string
+          completed_at?: string | null
+          duration_seconds?: number | null
+          channel: 'kiosk' | 'email' | 'sms' | 'qr_code' | 'web_embed' | 'web_link' | 'api'
+          device_type?: 'mobile' | 'tablet' | 'desktop' | 'kiosk' | 'unknown' | null
+          browser?: string | null
+          os?: string | null
+          ip_hash?: string | null
+          session_id?: string | null
+          language?: string
+          metadata?: Json
+          respondent_email?: string | null
+          respondent_phone?: string | null
+          respondent_name?: string | null
+        }
         Update: Partial<Database['public']['Tables']['responses']['Insert']>
+        Relationships: []
       }
       response_answers: {
         Row: {
@@ -250,12 +293,20 @@ export type Database = {
           question_type: string
           created_at: string
         }
-        Insert: Omit<
-          Database['public']['Tables']['response_answers']['Row'],
-          'id' | 'created_at'
-        > &
-          Partial<Pick<Database['public']['Tables']['response_answers']['Row'], 'id'>>
+        Insert: {
+          id?: string
+          response_id: string
+          question_id: string
+          organization_id: string
+          survey_id: string
+          value_numeric?: number | null
+          value_text?: string | null
+          value_boolean?: boolean | null
+          value_json?: Json | null
+          question_type: string
+        }
         Update: Partial<Database['public']['Tables']['response_answers']['Insert']>
+        Relationships: []
       }
       response_tags: {
         Row: {
@@ -276,6 +327,7 @@ export type Database = {
         > &
           Partial<Pick<Database['public']['Tables']['response_tags']['Row'], 'id'>>
         Update: Partial<Database['public']['Tables']['response_tags']['Insert']>
+        Relationships: []
       }
       pulse_schedules: {
         Row: {
@@ -303,6 +355,7 @@ export type Database = {
         > &
           Partial<Pick<Database['public']['Tables']['pulse_schedules']['Row'], 'id'>>
         Update: Partial<Database['public']['Tables']['pulse_schedules']['Insert']>
+        Relationships: []
       }
       report_snapshots: {
         Row: {
@@ -322,6 +375,7 @@ export type Database = {
         > &
           Partial<Pick<Database['public']['Tables']['report_snapshots']['Row'], 'id'>>
         Update: Partial<Database['public']['Tables']['report_snapshots']['Insert']>
+        Relationships: []
       }
       audit_logs: {
         Row: {
@@ -343,6 +397,7 @@ export type Database = {
         > &
           Partial<Pick<Database['public']['Tables']['audit_logs']['Row'], 'id'>>
         Update: never
+        Relationships: []
       }
     }
     Views: Record<string, never>
@@ -351,8 +406,13 @@ export type Database = {
         Args: Record<string, never>
         Returns: string
       }
+      increment_distribution_count: {
+        Args: { dist_id: string }
+        Returns: undefined
+      }
     }
     Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
   }
 }
 

@@ -19,8 +19,9 @@ export async function generateMetadata({ params }: SurveyPageProps) {
     .eq('is_active', true)
     .single()
 
-  const title =
-    (data?.surveys as { title: string } | null)?.title ?? 'Feedback Survey'
+  // Joined select causes Supabase TS to infer `never` — cast via unknown
+  const dist = data as unknown as { surveys: { title: string } | null } | null
+  const title = dist?.surveys?.title ?? 'Feedback Survey'
   return { title }
 }
 
@@ -66,7 +67,13 @@ export default async function SurveyPage({ params, searchParams }: SurveyPagePro
 
   if (!distribution) notFound()
 
-  const survey = distribution.surveys as Record<string, unknown> | null
+  // Joined select causes Supabase TS to infer `never` — cast via unknown
+  type DistributionData = {
+    id: string; channel: string; config: unknown
+    surveys: (Record<string, unknown> & { questions: Array<{ position: number }> }) | null
+  }
+  const dist2 = distribution as unknown as DistributionData
+  const survey = dist2.surveys
   if (!survey || survey.status !== 'active') {
     return (
       <div className="flex min-h-svh items-center justify-center p-6 text-center">
@@ -92,8 +99,8 @@ export default async function SurveyPage({ params, searchParams }: SurveyPagePro
     <BrandedSurveyShell branding={branding}>
       <SurveyRunner
         survey={{ ...survey, questions }}
-        distributionId={distribution.id}
-        channel={distribution.channel}
+        distributionId={dist2.id}
+        channel={dist2.channel}
         locale={locale}
       />
     </BrandedSurveyShell>
