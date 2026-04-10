@@ -100,6 +100,16 @@ export async function signup(formData: FormData) {
     accepted_at: new Date().toISOString(),
   })
 
+  // Refresh session so the custom_access_token_hook can populate
+  // organization_id + role into the new JWT's app_metadata.
+  // (The initial signUp token was issued before the org row existed.)
+  const { data: sessionData } = await supabase.auth.getSession()
+  if (sessionData.session?.refresh_token) {
+    await supabase.auth.refreshSession({
+      refresh_token: sessionData.session.refresh_token,
+    })
+  }
+
   revalidatePath('/', 'layout')
   redirect('/surveys')
 }
