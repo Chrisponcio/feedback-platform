@@ -13,7 +13,6 @@ export default async function SurveysPage() {
     .is('deleted_at', null)
     .order('updated_at', { ascending: false })
 
-  // deleted_at filter causes Supabase TS to infer `never` — cast via unknown
   type SurveyRow = {
     id: string; title: string; status: string; survey_type: string
     language: string; created_at: string; updated_at: string
