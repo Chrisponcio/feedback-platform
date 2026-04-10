@@ -1,11 +1,11 @@
 # Pulse — Phase Progress Tracker
 
 > Last updated: 2026-04-10
-> Current phase: **Pre-Phase (Setup)**
+> Current phase: **Phase 1 (Foundation)**
 
 ---
 
-## Pre-Phase: Project Setup ✅ / 🟡
+## Pre-Phase: Project Setup ✅
 
 **Goal:** Monorepo scaffold, Supabase schema, CI/CD, tooling.
 
@@ -18,9 +18,9 @@
 - [x] `apps/web/src/lib/supabase/browser.ts` — singleton browser client
 - [x] App Router route group structure — `(auth)`, `(dashboard)`, `(survey)`, `kiosk/`, `api/`
 - [x] Root layout (`app/layout.tsx`) — Inter font, metadata
-- [ ] GitHub repo created + initial commit pushed
+- [x] GitHub repo created + initial commit pushed — https://github.com/Chrisponcio/feedback-platform
+- [x] Vercel project deployed — root directory blank, `vercel.json` drives build from repo root
 - [ ] Two Supabase projects created: `pulse-prod` and `pulse-staging`
-- [ ] Vercel projects configured with environment variables + preview deployments
 - [ ] CI/CD: GitHub Actions → `supabase db push` on merge to main
 - [ ] ESLint, Prettier, Husky pre-commit hooks configured
 - [ ] Vitest + Playwright baseline configured
