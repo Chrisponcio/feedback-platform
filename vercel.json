@@ -1,10 +1,6 @@
 {
   "crons": [
     {
-      "path": "/api/cron/pulse-surveys",
-      "schedule": "0 * * * *"
-    },
-    {
       "path": "/api/cron/report-snapshots",
       "schedule": "0 2 * * *"
     },

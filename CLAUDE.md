@@ -147,10 +147,14 @@ SUPABASE_SERVICE_ROLE_KEY       # From supabase start output — server only
 
 ## Vercel Cron Jobs
 
+Currently configured for **Hobby plan** (max 2 cron jobs, daily minimum):
+
 ```json
 { "crons": [
-  { "path": "/api/cron/pulse-surveys",       "schedule": "0 * * * *"  },
-  { "path": "/api/cron/report-snapshots",    "schedule": "0 2 * * *"  },
-  { "path": "/api/cron/cleanup-invitations", "schedule": "0 0 * * *"  }
+  { "path": "/api/cron/report-snapshots",    "schedule": "0 2 * * *" },
+  { "path": "/api/cron/cleanup-invitations", "schedule": "0 0 * * *" }
 ]}
 ```
+
+> **Pro plan upgrade required** to add `/api/cron/pulse-surveys` at hourly frequency (`0 * * * *`).
+> Add it back to `vercel.json` when upgrading (Phase 4 — employee pulse surveys).
