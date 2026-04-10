@@ -9,6 +9,10 @@
 --   • RLS enabled on every table; policies enforce org isolation
 -- ============================================================
 
+-- Make extension functions (moddatetime, gen_random_uuid, etc.) visible without schema prefix.
+-- Supabase installs extensions in the `extensions` schema, not `public`.
+SET search_path = public, extensions;
+
 -- Extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
