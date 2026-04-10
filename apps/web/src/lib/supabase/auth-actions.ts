@@ -110,3 +110,70 @@ export async function logout() {
   revalidatePath('/', 'layout')
   redirect('/login')
 }
+
+export async function acceptInvite(formData: FormData) {
+  const token = formData.get('token') as string | null
+  const fullName = (formData.get('fullName') as string | null)?.trim()
+  const password = formData.get('password') as string | null
+
+  if (!token || !fullName || !password || password.length < 8) {
+    return { error: 'Please fill in all fields (password min 8 characters).' }
+  }
+
+  const serviceClient = createServiceRoleClient()
+
+  // Re-validate — invitation must still be open and unexpired
+  const { data: inv } = await serviceClient
+    .from('invitations')
+    .select('id, email, role, organization_id')
+    .eq('token', token)
+    .is('accepted_at', null)
+    .gt('expires_at', new Date().toISOString())
+    .single()
+
+  if (!inv) {
+    return { error: 'This invitation is invalid or has expired.' }
+  }
+
+  // Create user via admin API (skips email confirmation)
+  const { data: authData, error: authError } =
+    await serviceClient.auth.admin.createUser({
+      email: inv.email,
+      password,
+      user_metadata: { full_name: fullName },
+      email_confirm: true,
+    })
+
+  if (authError) {
+    if (authError.message.toLowerCase().includes('already been registered')) {
+      return { error: 'This email is already registered. Please sign in instead.' }
+    }
+    return { error: authError.message }
+  }
+
+  if (!authData.user) {
+    return { error: 'Failed to create account. Please try again.' }
+  }
+
+  // Add to org
+  await serviceClient.from('organization_members').insert({
+    organization_id: inv.organization_id,
+    user_id: authData.user.id,
+    role: inv.role as 'admin' | 'manager' | 'viewer',
+    status: 'active',
+    accepted_at: new Date().toISOString(),
+  })
+
+  // Mark invitation accepted
+  await serviceClient
+    .from('invitations')
+    .update({ accepted_at: new Date().toISOString() })
+    .eq('id', inv.id)
+
+  // Sign the new user in
+  const supabase = await createServerClient()
+  await supabase.auth.signInWithPassword({ email: inv.email, password })
+
+  revalidatePath('/', 'layout')
+  redirect('/surveys')
+}
