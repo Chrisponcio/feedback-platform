@@ -25,12 +25,14 @@ import { SortableQuestionCard } from './sortable-question-card'
 import { QuestionTypePicker } from './question-type-picker'
 import { QuestionEditor } from './question-editor'
 import { SurveySettingsPanel } from './survey-settings-panel'
+import { DistributePanel } from './distribute-panel'
 import { saveSurvey } from '@/lib/survey-actions'
 
 interface SurveyBuilderProps {
   surveyId: string
   initialSettings: SurveySettings
   initialQuestions: BuilderQuestion[]
+  existingDistributionToken: string | null
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -39,6 +41,7 @@ export function SurveyBuilder({
   surveyId,
   initialSettings,
   initialQuestions,
+  existingDistributionToken,
 }: SurveyBuilderProps) {
   const { init, addQuestion, reorderQuestions, selectQuestion, markSaved, isDirty } =
     useBuilderStore((s) => ({
@@ -56,7 +59,7 @@ export function SurveyBuilder({
 
   const [isPending, startTransition] = useTransition()
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [rightPanel, setRightPanel] = useState<'edit' | 'settings'>('edit')
+  const [rightPanel, setRightPanel] = useState<'edit' | 'settings' | 'distribute'>('edit')
   const [showTypePicker, setShowTypePicker] = useState(false)
 
   // Initialise store from server data on mount
@@ -161,33 +164,30 @@ export function SurveyBuilder({
       {/* ── Right panel: editor or settings ──────────────────────────── */}
       <aside className="flex w-80 flex-col border-l bg-background">
         <div className="flex border-b">
-          <button
-            className={[
-              'flex-1 px-4 py-3 text-sm font-medium transition-colors',
-              rightPanel === 'edit'
-                ? 'border-b-2 border-primary text-foreground'
-                : 'text-muted-foreground hover:text-foreground',
-            ].join(' ')}
-            onClick={() => setRightPanel('edit')}
-          >
-            Edit
-          </button>
-          <button
-            className={[
-              'flex-1 px-4 py-3 text-sm font-medium transition-colors',
-              rightPanel === 'settings'
-                ? 'border-b-2 border-primary text-foreground'
-                : 'text-muted-foreground hover:text-foreground',
-            ].join(' ')}
-            onClick={() => setRightPanel('settings')}
-          >
-            Settings
-          </button>
+          {(['edit', 'settings', 'distribute'] as const).map((panel) => (
+            <button
+              key={panel}
+              className={[
+                'flex-1 px-3 py-3 text-xs font-medium capitalize transition-colors',
+                rightPanel === panel
+                  ? 'border-b-2 border-primary text-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              ].join(' ')}
+              onClick={() => setRightPanel(panel)}
+            >
+              {panel}
+            </button>
+          ))}
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {rightPanel === 'settings' ? (
             <SurveySettingsPanel />
+          ) : rightPanel === 'distribute' ? (
+            <DistributePanel
+              surveyId={surveyId}
+              existingToken={existingDistributionToken}
+            />
           ) : selectedQuestion ? (
             <QuestionEditor question={selectedQuestion} />
           ) : (

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { SurveyRunner } from '@/components/survey/survey-runner'
 import { BrandedSurveyShell } from '@/components/survey/branded-survey-shell'
+import type { RunnerQuestion } from '@/components/survey/question-inputs'
 
 interface SurveyPageProps {
   params: Promise<{ token: string }>
@@ -19,10 +20,8 @@ export async function generateMetadata({ params }: SurveyPageProps) {
     .eq('is_active', true)
     .single()
 
-  // Joined select causes Supabase TS to infer `never` — cast via unknown
   const dist = data as unknown as { surveys: { title: string } | null } | null
-  const title = dist?.surveys?.title ?? 'Feedback Survey'
-  return { title }
+  return { title: dist?.surveys?.title ?? 'Feedback Survey' }
 }
 
 export default async function SurveyPage({ params, searchParams }: SurveyPageProps) {
@@ -30,25 +29,21 @@ export default async function SurveyPage({ params, searchParams }: SurveyPagePro
   const { lang } = await searchParams
   const supabase = createServiceRoleClient()
 
-  // Validate the distribution token and load survey with questions
   const { data: distribution } = await supabase
     .from('survey_distributions')
     .select(`
       id,
+      token,
       channel,
-      config,
       surveys (
         id,
         title,
         description,
         status,
         branding,
-        settings,
         language,
         thank_you_message,
         redirect_url,
-        ends_at,
-        response_limit,
         questions (
           id,
           type,
@@ -56,8 +51,7 @@ export default async function SurveyPage({ params, searchParams }: SurveyPagePro
           description,
           is_required,
           position,
-          settings,
-          logic
+          settings
         )
       )
     `)
@@ -67,13 +61,21 @@ export default async function SurveyPage({ params, searchParams }: SurveyPagePro
 
   if (!distribution) notFound()
 
-  // Joined select causes Supabase TS to infer `never` — cast via unknown
-  type DistributionData = {
-    id: string; channel: string; config: unknown
-    surveys: (Record<string, unknown> & { questions: Array<{ position: number }> }) | null
+  type RawQuestion = {
+    id: string; type: string; title: string; description: string | null
+    is_required: boolean; position: number; settings: Record<string, unknown> | null
   }
-  const dist2 = distribution as unknown as DistributionData
-  const survey = dist2.surveys
+  type RawSurvey = {
+    id: string; title: string; description: string | null; status: string
+    branding: Record<string, string>; language: string
+    thank_you_message: string | null; redirect_url: string | null
+    questions: RawQuestion[]
+  }
+  type RawDist = { id: string; token: string; channel: string; surveys: RawSurvey | null }
+
+  const dist = distribution as unknown as RawDist
+  const survey = dist.surveys
+
   if (!survey || survey.status !== 'active') {
     return (
       <div className="flex min-h-svh items-center justify-center p-6 text-center">
@@ -87,20 +89,25 @@ export default async function SurveyPage({ params, searchParams }: SurveyPagePro
     )
   }
 
-  // Sort questions by position
-  const questions = (
-    (survey.questions as Array<{ position: number }> | null) ?? []
-  ).sort((a, b) => a.position - b.position)
+  const questions: RunnerQuestion[] = [...survey.questions].sort(
+    (a, b) => a.position - b.position
+  )
 
-  const locale = lang ?? (survey.language as string) ?? 'en'
-  const branding = (survey.branding as Record<string, string>) ?? {}
+  const locale = lang ?? survey.language ?? 'en'
 
   return (
-    <BrandedSurveyShell branding={branding}>
+    <BrandedSurveyShell branding={survey.branding ?? {}}>
       <SurveyRunner
-        survey={{ ...survey, questions }}
-        distributionId={dist2.id}
-        channel={dist2.channel}
+        survey={{
+          id: survey.id,
+          title: survey.title,
+          description: survey.description,
+          thank_you_message: survey.thank_you_message,
+          redirect_url: survey.redirect_url,
+          questions,
+        }}
+        distributionToken={dist.token}
+        channel={dist.channel}
         locale={locale}
       />
     </BrandedSurveyShell>
