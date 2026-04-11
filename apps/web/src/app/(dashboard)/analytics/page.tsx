@@ -6,36 +6,90 @@ export const metadata: Metadata = { title: 'Analytics' }
 
 export default async function AnalyticsPage() {
   const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const orgId = (user?.app_metadata?.organization_id as string | undefined) ?? ''
 
-  // Fetch initial aggregate metrics for the last 30 days
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [{ count: totalResponses }, { data: rawNpsAnswers }] = await Promise.all([
+  const [
+    { count: totalResponses },
+    { count: totalStarted },
+    { data: rawNpsAnswers },
+    { data: rawCsatAnswers },
+    { data: rawFeed },
+  ] = await Promise.all([
+    // Completed responses in period
     supabase
       .from('responses')
       .select('*', { count: 'exact', head: true })
       .eq('is_complete', true)
       .gte('created_at', thirtyDaysAgo),
+
+    // All started responses in period (for completion rate)
+    supabase
+      .from('responses')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', thirtyDaysAgo),
+
+    // NPS answers
     supabase
       .from('response_answers')
       .select('value_numeric')
       .eq('question_type', 'nps')
       .gte('created_at', thirtyDaysAgo)
       .not('value_numeric', 'is', null),
+
+    // CSAT answers
+    supabase
+      .from('response_answers')
+      .select('value_numeric')
+      .eq('question_type', 'csat')
+      .gte('created_at', thirtyDaysAgo)
+      .not('value_numeric', 'is', null),
+
+    // Recent response feed (last 20)
+    supabase
+      .from('responses')
+      .select('id, created_at, channel, is_complete, surveys(title)')
+      .eq('is_complete', true)
+      .order('created_at', { ascending: false })
+      .limit(20),
   ])
 
-  // question_type enum filter causes Supabase TS to infer `never` — cast via unknown
-  const npsAnswers = rawNpsAnswers as unknown as Array<{ value_numeric: number | null }>
+  // Cast — enum filters cause Supabase TS to infer `never`
+  type NumericAnswer = { value_numeric: number | null }
+  type FeedRow = {
+    id: string; created_at: string; channel: string
+    is_complete: boolean; surveys: { title: string } | null
+  }
 
-  // Calculate NPS score
-  const npsValues = (npsAnswers ?? [])
+  const npsAnswers = (rawNpsAnswers as unknown as NumericAnswer[] | null) ?? []
+  const csatAnswers = (rawCsatAnswers as unknown as NumericAnswer[] | null) ?? []
+  const feedRows = (rawFeed as unknown as FeedRow[] | null) ?? []
+
+  // NPS calculation
+  const npsValues = npsAnswers
     .map((a) => a.value_numeric)
     .filter((v): v is number => v !== null)
-  const promoters = npsValues.filter((v) => v >= 9).length
+  const promoters  = npsValues.filter((v) => v >= 9).length
+  const passives   = npsValues.filter((v) => v >= 7 && v <= 8).length
   const detractors = npsValues.filter((v) => v <= 6).length
-  const npsScore =
-    npsValues.length > 0
-      ? Math.round(((promoters - detractors) / npsValues.length) * 100)
+  const npsScore   = npsValues.length > 0
+    ? Math.round(((promoters - detractors) / npsValues.length) * 100)
+    : null
+
+  // CSAT average
+  const csatValues = csatAnswers
+    .map((a) => a.value_numeric)
+    .filter((v): v is number => v !== null)
+  const csatAverage = csatValues.length > 0
+    ? csatValues.reduce((s, v) => s + v, 0) / csatValues.length
+    : null
+
+  // Completion rate
+  const completionRate =
+    totalStarted && totalStarted > 0 && totalResponses !== null
+      ? (totalResponses / totalStarted) * 100
       : null
 
   return (
@@ -49,9 +103,14 @@ export default async function AnalyticsPage() {
           totalResponses: totalResponses ?? 0,
           npsScore,
           promoters,
+          passives,
           detractors,
+          csatAverage,
+          completionRate,
           periodDays: 30,
         }}
+        initialResponses={feedRows}
+        orgId={orgId}
       />
     </div>
   )
