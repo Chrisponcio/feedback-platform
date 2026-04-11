@@ -18,6 +18,7 @@ interface InputProps {
   question: RunnerQuestion
   value: unknown
   onChange: (value: unknown) => void
+  locale?: string
 }
 
 // ── Star Rating ────────────────────────────────────────────────────────────────
@@ -120,13 +121,19 @@ function MultipleChoiceInput({ question, value, onChange }: InputProps) {
 
 // ── Open Text ─────────────────────────────────────────────────────────────────
 
-function OpenTextInput({ question, value, onChange }: InputProps) {
+function OpenTextInput({ question, value, onChange, locale }: InputProps) {
+  const placeholder = locale === 'es'
+    ? 'Escribe tu respuesta aquí…'
+    : locale === 'ar'
+      ? 'اكتب ردك هنا…'
+      : 'Type your answer here…'
   return (
     <textarea
       rows={4}
       value={(value as string) ?? ''}
       onChange={(e) => onChange(e.target.value)}
-      placeholder={question.description ?? 'Type your answer here…'}
+      placeholder={question.description ?? placeholder}
+      dir={locale === 'ar' ? 'rtl' : 'ltr'}
       className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     />
   )
@@ -134,7 +141,7 @@ function OpenTextInput({ question, value, onChange }: InputProps) {
 
 // ── Dispatcher ─────────────────────────────────────────────────────────────────
 
-export function QuestionInput({ question, value, onChange }: InputProps) {
+export function QuestionInput({ question, value, onChange, locale }: InputProps) {
   switch (question.type) {
     case 'nps':
       return (
@@ -159,7 +166,7 @@ export function QuestionInput({ question, value, onChange }: InputProps) {
     case 'multiple_choice':
       return <MultipleChoiceInput question={question} value={value} onChange={onChange} />
     case 'open_text':
-      return <OpenTextInput question={question} value={value} onChange={onChange} />
+      return <OpenTextInput question={question} value={value} onChange={onChange} locale={locale} />
     default:
       return (
         <p className="text-sm text-muted-foreground">

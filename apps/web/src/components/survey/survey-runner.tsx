@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { Button } from '@pulse/ui'
 import { QuestionInput, valueToAnswer, type RunnerQuestion } from './question-inputs'
+import { getSurveyT, isRtl } from '@/lib/survey-i18n'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -24,7 +25,10 @@ type RunnerState = 'intro' | 'questions' | 'submitting' | 'done' | 'error'
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function SurveyRunner({ survey, distributionToken, channel }: SurveyRunnerProps) {
+export function SurveyRunner({ survey, distributionToken, locale }: SurveyRunnerProps) {
+  const t   = getSurveyT(locale)
+  const rtl = isRtl(locale)
+
   const questions = survey.questions
   const [state, setState] = useState<RunnerState>(
     questions.length === 0 ? 'done' : 'intro'
@@ -37,7 +41,7 @@ export function SurveyRunner({ survey, distributionToken, channel }: SurveyRunne
 
   const currentQuestion = questions[currentIndex]
   const totalQuestions = questions.length
-  const progress = totalQuestions > 0 ? ((currentIndex) / totalQuestions) * 100 : 0
+  const progress = totalQuestions > 0 ? (currentIndex / totalQuestions) * 100 : 0
 
   const handleAnswer = useCallback((questionId: string, value: unknown) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }))
@@ -68,7 +72,7 @@ export function SurveyRunner({ survey, distributionToken, channel }: SurveyRunne
           answers: answerPayload,
           started_at: startedAt,
           completed_at: new Date().toISOString(),
-          language: 'en',
+          language: locale,
         }),
       })
 
@@ -93,7 +97,7 @@ export function SurveyRunner({ survey, distributionToken, channel }: SurveyRunne
     if (currentIndex < totalQuestions - 1) {
       setCurrentIndex((i) => i + 1)
     } else {
-      handleSubmit()
+      void handleSubmit()
     }
   }
 
@@ -105,7 +109,7 @@ export function SurveyRunner({ survey, distributionToken, channel }: SurveyRunne
 
   if (state === 'intro') {
     return (
-      <Shell>
+      <Shell rtl={rtl}>
         <div className="space-y-6 text-center">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">{survey.title}</h1>
@@ -117,7 +121,7 @@ export function SurveyRunner({ survey, distributionToken, channel }: SurveyRunne
             {totalQuestions} question{totalQuestions !== 1 ? 's' : ''} · Takes about a minute
           </p>
           <Button className="w-full" onClick={() => setState('questions')}>
-            Start survey
+            {t.start}
           </Button>
         </div>
       </Shell>
@@ -128,15 +132,15 @@ export function SurveyRunner({ survey, distributionToken, channel }: SurveyRunne
 
   if (state === 'done') {
     return (
-      <Shell>
+      <Shell rtl={rtl}>
         <div className="space-y-4 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl">
             ✓
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Thank you!</h1>
+            <h1 className="text-2xl font-bold">{t.thank_you}</h1>
             <p className="mt-2 text-muted-foreground">
-              {survey.thank_you_message ?? 'Your feedback has been recorded.'}
+              {survey.thank_you_message ?? t.thank_you}
             </p>
           </div>
         </div>
@@ -148,7 +152,7 @@ export function SurveyRunner({ survey, distributionToken, channel }: SurveyRunne
 
   if (state === 'error') {
     return (
-      <Shell>
+      <Shell rtl={rtl}>
         <div className="space-y-4 text-center">
           <h1 className="text-xl font-bold">Something went wrong</h1>
           <p className="text-sm text-muted-foreground">{errorMsg}</p>
@@ -167,7 +171,7 @@ export function SurveyRunner({ survey, distributionToken, channel }: SurveyRunne
   const isLast = currentIndex === totalQuestions - 1
 
   return (
-    <Shell>
+    <Shell rtl={rtl}>
       {/* Progress bar */}
       <div className="mb-8 h-1 w-full overflow-hidden rounded-full bg-muted">
         <div
@@ -178,7 +182,7 @@ export function SurveyRunner({ survey, distributionToken, channel }: SurveyRunne
 
       {/* Question counter */}
       <p className="mb-6 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
-        Question {currentIndex + 1} of {totalQuestions}
+        {t.question_of(currentIndex + 1, totalQuestions)}
       </p>
 
       {/* Question */}
@@ -201,6 +205,7 @@ export function SurveyRunner({ survey, distributionToken, channel }: SurveyRunne
           question={currentQuestion}
           value={answers[currentQuestion.id] ?? null}
           onChange={(val) => handleAnswer(currentQuestion.id, val)}
+          locale={locale}
         />
       </div>
 
@@ -208,7 +213,7 @@ export function SurveyRunner({ survey, distributionToken, channel }: SurveyRunne
       <div className="mt-8 flex gap-3">
         {currentIndex > 0 && (
           <Button variant="outline" className="flex-1" onClick={handleBack}>
-            Back
+            {t.back}
           </Button>
         )}
         <Button
@@ -217,10 +222,10 @@ export function SurveyRunner({ survey, distributionToken, channel }: SurveyRunne
           disabled={!canAdvance() || state === 'submitting'}
         >
           {state === 'submitting'
-            ? 'Submitting…'
+            ? t.submitting
             : isLast
-              ? 'Submit'
-              : 'Next'}
+              ? t.submit
+              : t.next}
         </Button>
       </div>
 
@@ -230,7 +235,7 @@ export function SurveyRunner({ survey, distributionToken, channel }: SurveyRunne
           className="mt-3 w-full text-xs text-muted-foreground hover:text-foreground"
           onClick={handleNext}
         >
-          Skip this question
+          {t.skip}
         </button>
       )}
     </Shell>
@@ -239,9 +244,12 @@ export function SurveyRunner({ survey, distributionToken, channel }: SurveyRunne
 
 // ── Shell wrapper ─────────────────────────────────────────────────────────────
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, rtl }: { children: React.ReactNode; rtl: boolean }) {
   return (
-    <div className="flex min-h-svh items-center justify-center p-6">
+    <div
+      className="flex min-h-svh items-center justify-center p-6"
+      dir={rtl ? 'rtl' : 'ltr'}
+    >
       <div className="w-full max-w-lg">{children}</div>
     </div>
   )

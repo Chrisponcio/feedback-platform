@@ -2,5 +2,20 @@
   "app": {
     "name": "Pulse",
     "tagline": "Modern Feedback Platform"
+  },
+  "survey": {
+    "start": "Start survey",
+    "next": "Next",
+    "back": "Back",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "question_of": "{current} of {total}",
+    "required": "This question is required",
+    "thank_you": "Thank you for your feedback!",
+    "open_text_placeholder": "Type your response here…",
+    "nps_not_likely": "Not at all likely",
+    "nps_very_likely": "Extremely likely",
+    "unavailable": "Survey Unavailable",
+    "unavailable_description": "This survey is no longer accepting responses."
   }
 }

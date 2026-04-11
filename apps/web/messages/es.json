@@ -1,0 +1,21 @@
+{
+  "app": {
+    "name": "Pulse",
+    "tagline": "Plataforma de Retroalimentación Moderna"
+  },
+  "survey": {
+    "start": "Comenzar encuesta",
+    "next": "Siguiente",
+    "back": "Atrás",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "question_of": "{current} de {total}",
+    "required": "Esta pregunta es obligatoria",
+    "thank_you": "¡Gracias por tu opinión!",
+    "open_text_placeholder": "Escribe tu respuesta aquí…",
+    "nps_not_likely": "Muy improbable",
+    "nps_very_likely": "Muy probable",
+    "unavailable": "Encuesta no disponible",
+    "unavailable_description": "Esta encuesta ya no acepta respuestas."
+  }
+}

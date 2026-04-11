@@ -1,0 +1,21 @@
+{
+  "app": {
+    "name": "Pulse",
+    "tagline": "منصة التغذية الراجعة الحديثة"
+  },
+  "survey": {
+    "start": "ابدأ الاستطلاع",
+    "next": "التالي",
+    "back": "رجوع",
+    "submit": "إرسال",
+    "cancel": "إلغاء",
+    "question_of": "{current} من {total}",
+    "required": "هذا السؤال مطلوب",
+    "thank_you": "شكراً على ملاحظاتك!",
+    "open_text_placeholder": "اكتب ردك هنا…",
+    "nps_not_likely": "غير محتمل على الإطلاق",
+    "nps_very_likely": "محتمل جداً",
+    "unavailable": "الاستطلاع غير متاح",
+    "unavailable_description": "هذا الاستطلاع لم يعد يقبل الردود."
+  }
+}
