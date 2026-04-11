@@ -12,6 +12,7 @@ export interface RunnerQuestion {
   description: string | null
   is_required: boolean
   settings: Record<string, unknown> | null
+  logic?: import('@/lib/logic-evaluator').LogicConfig | null
 }
 
 interface InputProps {

@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import { Button } from '@pulse/ui'
 import { QuestionInput, valueToAnswer, type RunnerQuestion } from './question-inputs'
 import { getSurveyT, isRtl } from '@/lib/survey-i18n'
+import { computeNextQuestion, type AnswerMap } from '@/lib/logic-evaluator'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -34,7 +35,7 @@ export function SurveyRunner({ survey, distributionToken, locale }: SurveyRunner
     questions.length === 0 ? 'done' : 'intro'
   )
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, unknown>>({})
+  const [answers, setAnswers] = useState<AnswerMap>({})
   const [sessionId] = useState(() => crypto.randomUUID())
   const [startedAt] = useState(() => new Date().toISOString())
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -44,7 +45,7 @@ export function SurveyRunner({ survey, distributionToken, locale }: SurveyRunner
   const progress = totalQuestions > 0 ? (currentIndex / totalQuestions) * 100 : 0
 
   const handleAnswer = useCallback((questionId: string, value: unknown) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: value }))
+    setAnswers((prev) => ({ ...prev, [questionId]: value as string | number | boolean | null | undefined }))
   }, [])
 
   function canAdvance() {
@@ -94,10 +95,13 @@ export function SurveyRunner({ survey, distributionToken, locale }: SurveyRunner
   }
 
   function handleNext() {
-    if (currentIndex < totalQuestions - 1) {
-      setCurrentIndex((i) => i + 1)
-    } else {
+    const next = computeNextQuestion(currentIndex, questions, answers)
+    if (next === 'end') {
       void handleSubmit()
+    } else if (next >= totalQuestions) {
+      void handleSubmit()
+    } else {
+      setCurrentIndex(next)
     }
   }
 
@@ -168,7 +172,8 @@ export function SurveyRunner({ survey, distributionToken, locale }: SurveyRunner
 
   if (!currentQuestion) return null
 
-  const isLast = currentIndex === totalQuestions - 1
+  const nextIndex = computeNextQuestion(currentIndex, questions, answers)
+  const isLast = nextIndex === 'end' || nextIndex >= totalQuestions
 
   return (
     <Shell rtl={rtl}>

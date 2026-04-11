@@ -2,12 +2,15 @@
 
 import { useBuilderStore, type BuilderQuestion, type QuestionOption } from '@/stores/builder-store'
 import { Input, Button } from '@pulse/ui'
+import { LogicRuleBuilder } from './logic-rule-builder'
+import type { LogicConfig } from '@/lib/logic-evaluator'
 
 interface QuestionEditorProps {
   question: BuilderQuestion
+  allQuestions: BuilderQuestion[]
 }
 
-export function QuestionEditor({ question }: QuestionEditorProps) {
+export function QuestionEditor({ question, allQuestions }: QuestionEditorProps) {
   const updateQuestion = useBuilderStore((s) => s.updateQuestion)
 
   function update(patch: Partial<BuilderQuestion>) {
@@ -122,6 +125,21 @@ export function QuestionEditor({ question }: QuestionEditorProps) {
           <Button variant="outline" size="sm" onClick={addOption} className="w-full">
             + Add option
           </Button>
+        </div>
+      )}
+
+      {/* Skip logic — only available when there are previous questions */}
+      {allQuestions.findIndex((q) => q.id === question.id) > 0 && (
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Logic
+          </label>
+          <LogicRuleBuilder
+            currentQuestionId={question.id}
+            questions={allQuestions.map((q) => ({ id: q.id, title: q.title || `Question ${allQuestions.indexOf(q) + 1}`, type: q.type }))}
+            value={question.logic ?? null}
+            onChange={(config: LogicConfig | null) => update({ logic: config })}
+          />
         </div>
       )}
     </div>

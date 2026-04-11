@@ -116,7 +116,7 @@ export async function saveSurvey(
       description: q.description || null,
       is_required: q.required,
       position: q.position,
-      logic: null,
+      logic: q.logic ?? null,
       settings: {
         ...(q.type === 'multiple_choice' && { options: q.options }),
         ...(q.type === 'star_rating' && {

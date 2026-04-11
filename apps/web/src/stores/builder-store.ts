@@ -26,6 +26,7 @@ export interface BuilderQuestion {
   options: QuestionOption[]  // used by multiple_choice
   scale_min?: number         // star_rating
   scale_max?: number         // star_rating
+  logic?: import('@/lib/logic-evaluator').LogicConfig | null
 }
 
 export interface SurveySettings {

@@ -64,6 +64,7 @@ export default async function SurveyPage({ params, searchParams }: SurveyPagePro
   type RawQuestion = {
     id: string; type: string; title: string; description: string | null
     is_required: boolean; position: number; settings: Record<string, unknown> | null
+    logic: import('@/lib/logic-evaluator').LogicConfig | null
   }
   type RawSurvey = {
     id: string; title: string; description: string | null; status: string
@@ -89,9 +90,9 @@ export default async function SurveyPage({ params, searchParams }: SurveyPagePro
     )
   }
 
-  const questions: RunnerQuestion[] = [...survey.questions].sort(
-    (a, b) => a.position - b.position
-  )
+  const questions: RunnerQuestion[] = [...survey.questions]
+    .sort((a, b) => a.position - b.position)
+    .map((q) => ({ ...q, is_required: q.is_required, logic: q.logic ?? null }))
 
   const locale = lang ?? survey.language ?? 'en'
 

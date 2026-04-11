@@ -189,7 +189,7 @@ export function SurveyBuilder({
               existingToken={existingDistributionToken}
             />
           ) : selectedQuestion ? (
-            <QuestionEditor question={selectedQuestion} />
+            <QuestionEditor question={selectedQuestion} allQuestions={questions} />
           ) : (
             <div className="flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground">
               Select a question to edit it, or add a new one.
