@@ -70,10 +70,14 @@ export async function signup(formData: FormData) {
 
   // Create auth user
   const supabase = await createServerClient()
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: {
+      data: { full_name: fullName },
+      emailRedirectTo: `${appUrl}/api/auth/callback?next=/surveys`,
+    },
   })
 
   if (authError || !authData.user) {
