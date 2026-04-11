@@ -15,6 +15,8 @@ const settingsSchema = z.object({
 
 // ── Create a new blank survey ──────────────────────────────────────────────────
 
+const WRITE_ROLES = ['owner', 'admin', 'manager']
+
 export async function createSurvey() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -22,6 +24,9 @@ export async function createSurvey() {
 
   const orgId = user.app_metadata?.organization_id as string | undefined
   if (!orgId) return { error: 'No organization found' }
+
+  const role = user.app_metadata?.role as string | undefined
+  if (!role || !WRITE_ROLES.includes(role)) return { error: 'Forbidden' }
 
   const { data, error } = await supabase
     .from('surveys')
@@ -59,6 +64,9 @@ export async function saveSurvey(
 
   const orgId = user.app_metadata?.organization_id as string | undefined
   if (!orgId) return { error: 'No organization found' }
+
+  const role = user.app_metadata?.role as string | undefined
+  if (!role || !WRITE_ROLES.includes(role)) return { error: 'Forbidden' }
 
   // Update survey row
   const { error: surveyError } = await supabase

@@ -7,6 +7,7 @@ import { logout } from '@/lib/supabase/auth-actions'
 const NAV = [
   { href: '/surveys',   label: 'Surveys' },
   { href: '/analytics', label: 'Analytics' },
+  { href: '/team',      label: 'Team' },
 ]
 
 interface DashboardShellProps {

@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { createServerClient, createServiceRoleClient } from './supabase/server'
 
+const WRITE_ROLES = ['owner', 'admin', 'manager']
+
 export async function createWebDistribution(surveyId: string) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -10,6 +12,9 @@ export async function createWebDistribution(surveyId: string) {
 
   const orgId = user.app_metadata?.organization_id as string | undefined
   if (!orgId) return { error: 'No organization found' }
+
+  const role = user.app_metadata?.role as string | undefined
+  if (!role || !WRITE_ROLES.includes(role)) return { error: 'Forbidden' }
 
   const serviceClient = createServiceRoleClient()
 
@@ -59,6 +64,9 @@ export async function deactivateDistribution(surveyId: string, token: string) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
+
+  const role = user.app_metadata?.role as string | undefined
+  if (!role || !WRITE_ROLES.includes(role)) return { error: 'Forbidden' }
 
   const serviceClient = createServiceRoleClient()
 
