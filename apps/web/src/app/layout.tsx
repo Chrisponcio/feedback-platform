@@ -10,6 +10,7 @@ export const metadata: Metadata = {
     default: 'Pulse — Modern Feedback Platform',
   },
   description: 'Collect customer and employee feedback across every channel.',
+  manifest: '/manifest.json',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
