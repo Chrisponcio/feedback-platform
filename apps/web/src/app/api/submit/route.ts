@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import type { Json } from '@pulse/db'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { fireWebhooks } from '@/lib/webhook-delivery'
 
 const answerSchema = z.object({
   question_id: z.string().uuid(),
@@ -145,6 +146,19 @@ export async function POST(request: NextRequest) {
 
   // Increment distribution response count
   await supabase.rpc('increment_distribution_count', { dist_id: distribution.id })
+
+  // Fire webhooks — async, non-blocking
+  void fireWebhooks(distribution.organization_id, 'response.created', {
+    response_id: response.id,
+    survey_id: distribution.survey_id,
+    channel: distribution.channel,
+    language,
+    started_at,
+    completed_at,
+    duration_seconds: Math.round(
+      (new Date(completed_at).getTime() - new Date(started_at).getTime()) / 1000
+    ),
+  })
 
   return NextResponse.json({ success: true, response_id: response.id }, { status: 201 })
 }
