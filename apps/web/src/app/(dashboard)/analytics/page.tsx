@@ -6,6 +6,7 @@ import {
   fetchNpsTrend,
   fetchHeatmapData,
   detectAnomalies,
+  fetchSentimentSummary,
 } from '@/lib/analytics-queries'
 
 export const metadata: Metadata = { title: 'Analytics' }
@@ -27,6 +28,7 @@ export default async function AnalyticsPage() {
     npsTrend,
     heatmapData,
     anomalies,
+    sentimentSummary,
   ] = await Promise.all([
     supabase
       .from('responses')
@@ -64,6 +66,7 @@ export default async function AnalyticsPage() {
     fetchNpsTrend(supabase, 30),
     fetchHeatmapData(supabase, 90),
     detectAnomalies(supabase),
+    fetchSentimentSummary(supabase, 30),
   ])
 
   type NumericAnswer = { value_numeric: number | null }
@@ -117,6 +120,7 @@ export default async function AnalyticsPage() {
         npsTrend={npsTrend}
         heatmapData={heatmapData}
         anomalies={anomalies}
+        sentimentSummary={sentimentSummary}
       />
     </div>
   )

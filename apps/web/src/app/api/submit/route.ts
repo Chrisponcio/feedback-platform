@@ -3,6 +3,7 @@ import { z } from 'zod'
 import type { Json } from '@pulse/db'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { fireWebhooks } from '@/lib/webhook-delivery'
+import { enqueueAiJob } from '@/lib/ai-sentiment'
 
 const answerSchema = z.object({
   question_id: z.string().uuid(),
@@ -146,6 +147,18 @@ export async function POST(request: NextRequest) {
 
   // Increment distribution response count
   await supabase.rpc('increment_distribution_count', { dist_id: distribution.id })
+
+  // Enqueue AI sentiment jobs for open_text answers (async, non-blocking)
+  for (const answer of answers) {
+    if (answer.question_type === 'open_text' && answer.value_text?.trim()) {
+      void enqueueAiJob({
+        responseId:     response.id,
+        questionId:     answer.question_id,
+        organizationId: distribution.organization_id,
+        text:           answer.value_text,
+      })
+    }
+  }
 
   // Fire webhooks — async, non-blocking
   void fireWebhooks(distribution.organization_id, 'response.created', {

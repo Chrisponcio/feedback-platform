@@ -199,3 +199,57 @@ export async function detectAnomalies(
 
   return results
 }
+
+// ── Sentiment summary ────────────────────────────────────────────────────────
+
+import type { SentimentSummary } from '@/components/analytics/sentiment-panel'
+
+export async function fetchSentimentSummary(
+  supabase: Client,
+  days: number = 30
+): Promise<SentimentSummary> {
+  const since = new Date(Date.now() - days * 86400000).toISOString()
+
+  const { data: tags } = await supabase
+    .from('response_tags')
+    .select('id, sentiment, summary, topics, created_at')
+    .gte('created_at', since)
+    .order('created_at', { ascending: false })
+    .limit(200)
+
+  if (!tags || tags.length === 0) {
+    return { positive: 0, neutral: 0, negative: 0, total: 0, topTopics: [], recentTags: [] }
+  }
+
+  type Tag = { id: string; sentiment: string; summary: string | null; topics: string[]; created_at: string }
+  const rows = tags as unknown as Tag[]
+
+  const counts = { positive: 0, neutral: 0, negative: 0 }
+  const topicMap = new Map<string, number>()
+
+  for (const tag of rows) {
+    const s = tag.sentiment as keyof typeof counts
+    if (s in counts) counts[s]++
+    for (const topic of tag.topics ?? []) {
+      topicMap.set(topic, (topicMap.get(topic) ?? 0) + 1)
+    }
+  }
+
+  const topTopics = Array.from(topicMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([topic, count]) => ({ topic, count }))
+
+  return {
+    ...counts,
+    total: rows.length,
+    topTopics,
+    recentTags: rows.slice(0, 5).map((t) => ({
+      id: t.id,
+      sentiment: t.sentiment as 'positive' | 'neutral' | 'negative',
+      summary: t.summary,
+      topics: t.topics ?? [],
+      created_at: t.created_at,
+    })),
+  }
+}

@@ -6,8 +6,10 @@ import { ResponseFeed } from '@/components/dashboard/response-feed'
 import { NpsTrendChart } from './nps-trend-chart'
 import { ResponseTrendChart } from './response-trend-chart'
 import { ResponseHeatmap } from './response-heatmap'
+import { SentimentPanel } from './sentiment-panel'
 import type { TrendPoint, NpsTrendPoint, AnomalyResult } from '@/lib/analytics-queries'
 import type { HeatmapCell } from './response-heatmap'
+import type { SentimentSummary } from './sentiment-panel'
 
 interface FeedResponse {
   id: string
@@ -36,6 +38,7 @@ interface AnalyticsDashboardProps {
   npsTrend: NpsTrendPoint[]
   heatmapData: HeatmapCell[]
   anomalies: AnomalyResult[]
+  sentimentSummary: SentimentSummary
 }
 
 export function AnalyticsDashboard({
@@ -46,6 +49,7 @@ export function AnalyticsDashboard({
   npsTrend,
   heatmapData,
   anomalies,
+  sentimentSummary,
 }: AnalyticsDashboardProps) {
   const csatDisplay = m.csatAverage !== null ? `${m.csatAverage.toFixed(1)} / 5` : '—'
   const completionDisplay = m.completionRate !== null ? `${Math.round(m.completionRate)}%` : '—'
@@ -127,6 +131,9 @@ export function AnalyticsDashboard({
         <h3 className="mb-4 text-sm font-semibold">Response Activity — Hour × Day (90d)</h3>
         <ResponseHeatmap data={heatmapData} />
       </div>
+
+      {/* AI Sentiment */}
+      <SentimentPanel data={sentimentSummary} />
     </div>
   )
 }
