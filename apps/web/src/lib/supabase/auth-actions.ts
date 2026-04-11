@@ -68,21 +68,21 @@ export async function signup(formData: FormData) {
     return { error: { orgSlug: ['This URL is already taken'] } }
   }
 
-  // Create auth user
-  const supabase = await createServerClient()
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { full_name: fullName },
-      emailRedirectTo: `${appUrl}/api/auth/callback?next=/surveys`,
-    },
-  })
+  // Create auth user via admin API so we can set app_metadata immediately
+  // and skip email confirmation for a smoother onboarding flow.
+  const { data: authData, error: authError } =
+    await serviceClient.auth.admin.createUser({
+      email,
+      password,
+      user_metadata: { full_name: fullName },
+      email_confirm: true, // skip confirmation — we trust the entered email for now
+    })
 
   if (authError || !authData.user) {
     return { error: { _: [authError?.message ?? 'Signup failed'] } }
   }
+
+  const userId = authData.user.id
 
   // Create organization
   const { data: org, error: orgError } = await serviceClient
@@ -92,27 +92,30 @@ export async function signup(formData: FormData) {
     .single()
 
   if (orgError || !org) {
+    // Roll back the auth user to keep things clean
+    await serviceClient.auth.admin.deleteUser(userId)
     return { error: { _: ['Failed to create organization'] } }
   }
 
-  // Create org membership (owner role)
+  // Create org membership (owner)
   await serviceClient.from('organization_members').insert({
     organization_id: org.id,
-    user_id: authData.user.id,
+    user_id: userId,
     role: 'owner',
     status: 'active',
     accepted_at: new Date().toISOString(),
   })
 
-  // Refresh session so the custom_access_token_hook can populate
-  // organization_id + role into the new JWT's app_metadata.
-  // (The initial signUp token was issued before the org row existed.)
-  const { data: sessionData } = await supabase.auth.getSession()
-  if (sessionData.session?.refresh_token) {
-    await supabase.auth.refreshSession({
-      refresh_token: sessionData.session.refresh_token,
-    })
-  }
+  // Write org claims directly to app_metadata in the database.
+  // supabase.auth.getUser() returns DB-stored app_metadata, NOT JWT claims,
+  // so we must persist organization_id + role here — not rely solely on the hook.
+  await serviceClient.auth.admin.updateUserById(userId, {
+    app_metadata: { organization_id: org.id, role: 'owner' },
+  })
+
+  // Sign the user in immediately (email_confirm: true above skips the flow)
+  const supabase = await createServerClient()
+  await supabase.auth.signInWithPassword({ email, password })
 
   revalidatePath('/', 'layout')
   redirect('/surveys')
@@ -169,13 +172,20 @@ export async function acceptInvite(formData: FormData) {
     return { error: 'Failed to create account. Please try again.' }
   }
 
+  const invRole = inv.role as 'admin' | 'manager' | 'viewer'
+
   // Add to org
   await serviceClient.from('organization_members').insert({
     organization_id: inv.organization_id,
     user_id: authData.user.id,
-    role: inv.role as 'admin' | 'manager' | 'viewer',
+    role: invRole,
     status: 'active',
     accepted_at: new Date().toISOString(),
+  })
+
+  // Persist org claims to app_metadata so getUser() reflects them
+  await serviceClient.auth.admin.updateUserById(authData.user.id, {
+    app_metadata: { organization_id: inv.organization_id, role: invRole },
   })
 
   // Mark invitation accepted
