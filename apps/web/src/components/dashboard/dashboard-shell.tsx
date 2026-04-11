@@ -9,6 +9,7 @@ const NAV = [
   { href: '/analytics', label: 'Analytics' },
   { href: '/locations', label: 'Locations' },
   { href: '/team',      label: 'Team' },
+  { href: '/settings',  label: 'Settings' },
 ]
 
 interface DashboardShellProps {

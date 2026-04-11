@@ -3,6 +3,11 @@
 import { MetricCard } from '@/components/dashboard/metric-card'
 import { NpsGauge } from '@/components/dashboard/nps-gauge'
 import { ResponseFeed } from '@/components/dashboard/response-feed'
+import { NpsTrendChart } from './nps-trend-chart'
+import { ResponseTrendChart } from './response-trend-chart'
+import { ResponseHeatmap } from './response-heatmap'
+import type { TrendPoint, NpsTrendPoint, AnomalyResult } from '@/lib/analytics-queries'
+import type { HeatmapCell } from './response-heatmap'
 
 interface FeedResponse {
   id: string
@@ -27,23 +32,34 @@ interface AnalyticsDashboardProps {
   initialMetrics: AnalyticsMetrics
   initialResponses: FeedResponse[]
   orgId: string
+  responseTrend: TrendPoint[]
+  npsTrend: NpsTrendPoint[]
+  heatmapData: HeatmapCell[]
+  anomalies: AnomalyResult[]
 }
 
 export function AnalyticsDashboard({
   initialMetrics: m,
   initialResponses,
   orgId,
+  responseTrend,
+  npsTrend,
+  heatmapData,
+  anomalies,
 }: AnalyticsDashboardProps) {
-  const csatDisplay = m.csatAverage !== null
-    ? `${m.csatAverage.toFixed(1)} / 5`
-    : '—'
-
-  const completionDisplay = m.completionRate !== null
-    ? `${Math.round(m.completionRate)}%`
-    : '—'
+  const csatDisplay = m.csatAverage !== null ? `${m.csatAverage.toFixed(1)} / 5` : '—'
+  const completionDisplay = m.completionRate !== null ? `${Math.round(m.completionRate)}%` : '—'
 
   return (
     <div className="space-y-6">
+      {/* Anomaly alerts */}
+      {anomalies.filter((a) => a.isAnomaly).map((a) => (
+        <div key={a.metric} className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <span className="font-medium">Anomaly detected</span> — {a.metric.replace('_', ' ')} today is{' '}
+          <span className="font-medium">{a.current}</span> vs baseline of {a.baseline} (z={a.zScore})
+        </div>
+      ))}
+
       {/* Top metrics row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
@@ -74,9 +90,9 @@ export function AnalyticsDashboard({
           }
         />
         <MetricCard
-          label="Period"
-          value={`${m.periodDays}d`}
-          sub="last 30 days"
+          label="NPS responses"
+          value={(m.promoters + m.passives + m.detractors).toLocaleString()}
+          sub={`${m.promoters} P · ${m.passives} Pa · ${m.detractors} D`}
         />
       </div>
 
@@ -90,11 +106,26 @@ export function AnalyticsDashboard({
           total={m.promoters + m.passives + m.detractors}
         />
         <div className="lg:col-span-2">
-          <ResponseFeed
-            initialResponses={initialResponses}
-            orgId={orgId}
-          />
+          <ResponseFeed initialResponses={initialResponses} orgId={orgId} />
         </div>
+      </div>
+
+      {/* Trend charts */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-lg border bg-background p-4">
+          <h3 className="mb-3 text-sm font-semibold">Daily Responses (30d)</h3>
+          <ResponseTrendChart data={responseTrend} />
+        </div>
+        <div className="rounded-lg border bg-background p-4">
+          <h3 className="mb-3 text-sm font-semibold">NPS Trend — 7-day rolling (30d)</h3>
+          <NpsTrendChart data={npsTrend} />
+        </div>
+      </div>
+
+      {/* Response heatmap */}
+      <div className="rounded-lg border bg-background p-4">
+        <h3 className="mb-4 text-sm font-semibold">Response Activity — Hour × Day (90d)</h3>
+        <ResponseHeatmap data={heatmapData} />
       </div>
     </div>
   )

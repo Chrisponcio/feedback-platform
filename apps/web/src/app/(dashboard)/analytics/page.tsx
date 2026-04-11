@@ -1,6 +1,12 @@
 import type { Metadata } from 'next'
 import { createServerClient } from '@/lib/supabase/server'
 import { AnalyticsDashboard } from '@/components/analytics/analytics-dashboard'
+import {
+  fetchDailyTrend,
+  fetchNpsTrend,
+  fetchHeatmapData,
+  detectAnomalies,
+} from '@/lib/analytics-queries'
 
 export const metadata: Metadata = { title: 'Analytics' }
 
@@ -17,21 +23,22 @@ export default async function AnalyticsPage() {
     { data: rawNpsAnswers },
     { data: rawCsatAnswers },
     { data: rawFeed },
+    responseTrend,
+    npsTrend,
+    heatmapData,
+    anomalies,
   ] = await Promise.all([
-    // Completed responses in period
     supabase
       .from('responses')
       .select('*', { count: 'exact', head: true })
       .eq('is_complete', true)
       .gte('created_at', thirtyDaysAgo),
 
-    // All started responses in period (for completion rate)
     supabase
       .from('responses')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', thirtyDaysAgo),
 
-    // NPS answers
     supabase
       .from('response_answers')
       .select('value_numeric')
@@ -39,7 +46,6 @@ export default async function AnalyticsPage() {
       .gte('created_at', thirtyDaysAgo)
       .not('value_numeric', 'is', null),
 
-    // CSAT answers
     supabase
       .from('response_answers')
       .select('value_numeric')
@@ -47,30 +53,30 @@ export default async function AnalyticsPage() {
       .gte('created_at', thirtyDaysAgo)
       .not('value_numeric', 'is', null),
 
-    // Recent response feed (last 20)
     supabase
       .from('responses')
       .select('id, created_at, channel, is_complete, surveys(title)')
       .eq('is_complete', true)
       .order('created_at', { ascending: false })
       .limit(20),
+
+    fetchDailyTrend(supabase, 30),
+    fetchNpsTrend(supabase, 30),
+    fetchHeatmapData(supabase, 90),
+    detectAnomalies(supabase),
   ])
 
-  // Cast — enum filters cause Supabase TS to infer `never`
   type NumericAnswer = { value_numeric: number | null }
   type FeedRow = {
     id: string; created_at: string; channel: string
     is_complete: boolean; surveys: { title: string } | null
   }
 
-  const npsAnswers = (rawNpsAnswers as unknown as NumericAnswer[] | null) ?? []
+  const npsAnswers  = (rawNpsAnswers  as unknown as NumericAnswer[] | null) ?? []
   const csatAnswers = (rawCsatAnswers as unknown as NumericAnswer[] | null) ?? []
-  const feedRows = (rawFeed as unknown as FeedRow[] | null) ?? []
+  const feedRows    = (rawFeed        as unknown as FeedRow[]       | null) ?? []
 
-  // NPS calculation
-  const npsValues = npsAnswers
-    .map((a) => a.value_numeric)
-    .filter((v): v is number => v !== null)
+  const npsValues  = npsAnswers.map((a) => a.value_numeric).filter((v): v is number => v !== null)
   const promoters  = npsValues.filter((v) => v >= 9).length
   const passives   = npsValues.filter((v) => v >= 7 && v <= 8).length
   const detractors = npsValues.filter((v) => v <= 6).length
@@ -78,15 +84,11 @@ export default async function AnalyticsPage() {
     ? Math.round(((promoters - detractors) / npsValues.length) * 100)
     : null
 
-  // CSAT average
-  const csatValues = csatAnswers
-    .map((a) => a.value_numeric)
-    .filter((v): v is number => v !== null)
+  const csatValues  = csatAnswers.map((a) => a.value_numeric).filter((v): v is number => v !== null)
   const csatAverage = csatValues.length > 0
     ? csatValues.reduce((s, v) => s + v, 0) / csatValues.length
     : null
 
-  // Completion rate
   const completionRate =
     totalStarted && totalStarted > 0 && totalResponses !== null
       ? (totalResponses / totalStarted) * 100
@@ -111,6 +113,10 @@ export default async function AnalyticsPage() {
         }}
         initialResponses={feedRows}
         orgId={orgId}
+        responseTrend={responseTrend}
+        npsTrend={npsTrend}
+        heatmapData={heatmapData}
+        anomalies={anomalies}
       />
     </div>
   )
