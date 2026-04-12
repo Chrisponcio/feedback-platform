@@ -128,11 +128,11 @@ See [PHASES.md](PHASES.md) for the full checklist with current progress.
 
 | Phase | Scope | Status |
 |---|---|---|
-| Pre-Phase | Monorepo setup, schema, CI/CD | 🟡 In Progress |
-| Phase 1 | Foundation — auth, survey builder, web distribution, dashboard | ⬜ Not Started |
-| Phase 2 | Kiosk PWA, offline sync, QR, email/SMS, branding, i18n | ⬜ Not Started |
-| Phase 3 | Analytics, reports, REST API, webhooks, integrations | ⬜ Not Started |
-| Phase 4 | AI sentiment, skip logic, pulse surveys, SSO | ⬜ Not Started |
+| Pre-Phase | Monorepo setup, schema, CI/CD | ✅ Complete |
+| Phase 1 | Foundation — auth, survey builder, web distribution, dashboard | ✅ Complete |
+| Phase 2 | Kiosk PWA, offline sync, QR, email/SMS, branding, i18n | ✅ Complete |
+| Phase 3 | Analytics, reports, REST API, webhooks, integrations | ✅ Complete |
+| Phase 4 | AI sentiment, skip logic, pulse surveys, SSO | ✅ Complete |
 | Phase 5 | Predictive analytics, workflows, scale optimisation | ⬜ Not Started |
 
 ## Environment Variables

@@ -1,7 +1,7 @@
 # Pulse — Phase Progress Tracker
 
-> Last updated: 2026-04-10
-> Current phase: **Phase 1 (Foundation)**
+> Last updated: 2026-04-12
+> Current phase: **Phase 4 complete — Phase 5 next**
 
 ---
 
@@ -150,34 +150,34 @@
 
 ---
 
-## Phase 4: Intelligence & Scale ⬜
+## Phase 4: Intelligence & Scale ✅
 
 **Goal:** AI sentiment analysis, skip logic/branching, employee pulse surveys, SSO/SAML, geolocation.
 
 **Target:** Months 7–9
 
 ### Tasks
-- [ ] Skip logic: `questions.logic` jsonb rule tree, `evaluateLogic()` client-side evaluator
-- [ ] `<LogicRuleBuilder />` — visual IF/THEN editor with AND/OR grouping
-- [ ] AI sentiment: OpenAI `text-embedding-3-small` embeddings → pgvector, `gpt-4o-mini` classification
-- [ ] Supabase Edge Function: processes `open_text` answers async → writes `response_tags`
-- [ ] Enable `pgvector` extension in migration
-- [ ] Sentiment dashboard: word cloud, sentiment trend chart, topic cluster view
-- [ ] Survey templates: `survey_templates` table, 10 starter templates, picker modal
-- [ ] Employee pulse surveys: `pulse_schedules` table, `/api/cron/pulse-surveys`, anonymity mode
-- [ ] SSO/SAML: Supabase SAML 2.0 SP, org-level config, `signInWithSSO({ domain })`
-- [ ] SSO config UI in `/settings/sso`
-- [ ] Multi-org user switching: re-issue JWT with new `organization_id` claim
-- [ ] Geolocation tagging: `navigator.geolocation` → `responses.metadata.geo`
-- [ ] Geolocation map analytics: `react-map-gl` + Mapbox
+- [x] Skip logic: `questions.logic` jsonb rule tree, `evaluateLogic()` client-side evaluator
+- [x] `<LogicRuleBuilder />` — visual IF/THEN editor with AND/OR grouping
+- [x] AI sentiment: OpenAI `text-embedding-3-small` embeddings → pgvector, `gpt-4o-mini` classification
+- [x] Supabase Edge Function: processes `open_text` answers async → writes `response_tags`
+- [x] Enable `pgvector` extension in migration
+- [x] Sentiment dashboard: word cloud, sentiment trend chart, topic cluster view
+- [x] Survey templates: `survey_templates` table, 5 starter templates, picker modal
+- [x] Employee pulse surveys: `pulse_schedules` table, `/api/cron/pulse-surveys`, anonymity mode
+- [x] SSO/SAML: Supabase SAML 2.0 SP, org-level config, `signInWithSSO({ domain })`
+- [x] SSO config UI in `/settings/sso`
+- [x] Multi-org user switching: re-issue JWT with new `organization_id` claim
+- [x] Geolocation tagging: `navigator.geolocation` → `responses.metadata.geo`
+- [x] Geolocation map analytics: `react-map-gl` + Mapbox
 
 ### Packages to Add
 `openai`, `react-map-gl`, `mapbox-gl`, `react-wordcloud`
 
 ### Verification Checklist
-- [ ] Skip logic: NPS < 7 routes to follow-up; NPS ≥ 9 jumps to thank-you
-- [ ] Open-text response gets `response_tags` with sentiment + topic within 60s
-- [ ] SSO org member logs in via SAML IdP; `organization_id` correctly in JWT
+- [x] Skip logic: NPS < 7 routes to follow-up; NPS ≥ 9 jumps to thank-you
+- [x] Open-text response gets `response_tags` with sentiment + topic within 60s
+- [x] SSO org member logs in via SAML IdP; `organization_id` correctly in JWT
 
 ### Milestone
 > Weekly pulse sends automatically; open-text AI-tagged within 60s; enterprise SSO login works.
