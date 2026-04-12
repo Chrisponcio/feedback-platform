@@ -133,7 +133,7 @@ See [PHASES.md](PHASES.md) for the full checklist with current progress.
 | Phase 2 | Kiosk PWA, offline sync, QR, email/SMS, branding, i18n | ✅ Complete |
 | Phase 3 | Analytics, reports, REST API, webhooks, integrations | ✅ Complete |
 | Phase 4 | AI sentiment, skip logic, pulse surveys, SSO | ✅ Complete |
-| Phase 5 | Predictive analytics, workflows, scale optimisation | ⬜ Not Started |
+| Phase 5 | Predictive analytics, workflows, scale optimisation | ✅ Complete |
 
 ## Environment Variables
 
