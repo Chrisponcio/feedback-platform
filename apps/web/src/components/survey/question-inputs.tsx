@@ -13,6 +13,8 @@ export interface RunnerQuestion {
   is_required: boolean
   settings: Record<string, unknown> | null
   logic?: import('@/lib/logic-evaluator').LogicConfig | null
+  media_url?: string | null
+  media_type?: string | null
 }
 
 interface InputProps {
@@ -140,6 +142,86 @@ function OpenTextInput({ question, value, onChange, locale }: InputProps) {
   )
 }
 
+// ── Media (image/video) question ──────────────────────────────────────────────
+
+function MediaQuestionInput({ question, value, onChange }: InputProps) {
+  const mediaUrl = question.media_url
+  const mediaType = question.media_type ?? 'image'
+  const [uploading, setUploading] = useState(false)
+
+  // Display media prompt (image or video)
+  const mediaElement = mediaUrl ? (
+    mediaType === 'video' ? (
+      <video
+        src={mediaUrl}
+        controls
+        className="mx-auto mb-4 max-h-64 rounded-lg"
+      />
+    ) : (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={mediaUrl}
+        alt="Question media"
+        className="mx-auto mb-4 max-h-64 rounded-lg object-contain"
+      />
+    )
+  ) : null
+
+  // File upload response (user uploads image/video as their answer)
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const res = await fetch('/api/media/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!res.ok) throw new Error('Upload failed')
+      const { url } = await res.json() as { url: string }
+      onChange(url)
+    } catch {
+      // Allow retry
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const currentUrl = value as string | null
+
+  return (
+    <div className="space-y-4">
+      {mediaElement}
+
+      {/* If it's a response-upload type media question */}
+      <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border p-6 transition-colors hover:border-primary/50 hover:bg-accent/30">
+        <svg className="h-8 w-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+        </svg>
+        <span className="text-sm text-muted-foreground">
+          {uploading ? 'Uploading...' : currentUrl ? 'Replace file' : 'Upload a file'}
+        </span>
+        <input
+          type="file"
+          accept="image/*,video/*"
+          onChange={handleFileUpload}
+          className="sr-only"
+          disabled={uploading}
+        />
+      </label>
+
+      {currentUrl && (
+        <p className="text-center text-xs text-emerald-600">File uploaded successfully</p>
+      )}
+    </div>
+  )
+}
+
 // ── Dispatcher ─────────────────────────────────────────────────────────────────
 
 export function QuestionInput({ question, value, onChange, locale }: InputProps) {
@@ -168,6 +250,8 @@ export function QuestionInput({ question, value, onChange, locale }: InputProps)
       return <MultipleChoiceInput question={question} value={value} onChange={onChange} />
     case 'open_text':
       return <OpenTextInput question={question} value={value} onChange={onChange} locale={locale} />
+    case 'media_question':
+      return <MediaQuestionInput question={question} value={value} onChange={onChange} />
     default:
       return (
         <p className="text-sm text-muted-foreground">
@@ -200,6 +284,8 @@ export function valueToAnswer(question: RunnerQuestion, value: unknown) {
       return { ...base, value_text: value as string }
     case 'multiple_choice':
       return { ...base, value_json: value }
+    case 'media_question':
+      return { ...base, value_text: value as string } // stored as URL
     default:
       return { ...base, value_json: value }
   }

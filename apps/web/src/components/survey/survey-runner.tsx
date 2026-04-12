@@ -1,12 +1,28 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Button } from '@pulse/ui'
 import { QuestionInput, valueToAnswer, type RunnerQuestion } from './question-inputs'
 import { getSurveyT, isRtl } from '@/lib/survey-i18n'
 import { computeNextQuestion, type AnswerMap } from '@/lib/logic-evaluator'
 
+// ── Confetti (lazy-loaded to avoid SSR issues) ──────────────────────────────
+function fireConfetti() {
+  import('canvas-confetti').then((mod) => {
+    const confetti = mod.default
+    // Two bursts from bottom corners
+    confetti({ particleCount: 80, spread: 70, origin: { x: 0.2, y: 0.9 } })
+    confetti({ particleCount: 80, spread: 70, origin: { x: 0.8, y: 0.9 } })
+  }).catch(() => { /* confetti is non-critical */ })
+}
+
 // ── Types ──────────────────────────────────────────────────────────────────────
+
+interface IncentiveConfig {
+  enabled: boolean
+  code?: string
+  message?: string
+}
 
 interface SurveyRunnerProps {
   survey: {
@@ -16,6 +32,7 @@ interface SurveyRunnerProps {
     thank_you_message?: string | null
     redirect_url?: string | null
     questions: RunnerQuestion[]
+    incentive_config?: IncentiveConfig | null
   }
   distributionToken: string
   channel: string
@@ -132,22 +149,16 @@ export function SurveyRunner({ survey, distributionToken, locale }: SurveyRunner
     )
   }
 
-  // ── Done screen ───────────────────────────────────────────────────────────────
+  // ── Done screen (with confetti + optional incentive code) ───────────────────
 
   if (state === 'done') {
     return (
       <Shell rtl={rtl}>
-        <div className="space-y-4 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl">
-            ✓
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">{t.thank_you}</h1>
-            <p className="mt-2 text-muted-foreground">
-              {survey.thank_you_message ?? t.thank_you}
-            </p>
-          </div>
-        </div>
+        <CompletionScreen
+          thankYouMessage={survey.thank_you_message ?? t.thank_you}
+          thankYouLabel={t.thank_you}
+          incentive={survey.incentive_config ?? undefined}
+        />
       </Shell>
     )
   }
@@ -244,6 +255,45 @@ export function SurveyRunner({ survey, distributionToken, locale }: SurveyRunner
         </button>
       )}
     </Shell>
+  )
+}
+
+// ── Completion screen with confetti + incentive ──────────────────────────────
+
+function CompletionScreen({
+  thankYouMessage,
+  thankYouLabel,
+  incentive,
+}: {
+  thankYouMessage: string
+  thankYouLabel: string
+  incentive?: IncentiveConfig
+}) {
+  useEffect(() => {
+    fireConfetti()
+  }, [])
+
+  return (
+    <div className="space-y-6 text-center">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl">
+        ✓
+      </div>
+      <div>
+        <h1 className="text-2xl font-bold">{thankYouLabel}</h1>
+        <p className="mt-2 text-muted-foreground">{thankYouMessage}</p>
+      </div>
+
+      {incentive?.enabled && incentive.code && (
+        <div className="rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-4">
+          <p className="text-sm font-medium text-muted-foreground">
+            {incentive.message ?? 'Here\u2019s your reward:'}
+          </p>
+          <p className="mt-2 font-mono text-2xl font-bold tracking-widest text-primary">
+            {incentive.code}
+          </p>
+        </div>
+      )}
+    </div>
   )
 }
 

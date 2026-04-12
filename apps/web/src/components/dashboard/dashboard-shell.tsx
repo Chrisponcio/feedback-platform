@@ -7,8 +7,10 @@ import { logout } from '@/lib/supabase/auth-actions'
 const NAV = [
   { href: '/surveys',   label: 'Surveys' },
   { href: '/analytics', label: 'Analytics' },
-  { href: '/reports',   label: 'Reports' },
+  { href: '/reports',      label: 'Reports' },
+  { href: '/predictions', label: 'Predictions' },
   { href: '/pulse',     label: 'Pulse' },
+  { href: '/workflows', label: 'Workflows' },
   { href: '/locations', label: 'Locations' },
   { href: '/team',      label: 'Team' },
   { href: '/settings',  label: 'Settings' },
