@@ -19,19 +19,12 @@ interface SortableQuestionCardProps {
 }
 
 export function SortableQuestionCard({ question, isSelected }: SortableQuestionCardProps) {
-  const { selectQuestion, removeQuestion } = useBuilderStore((s) => ({
-    selectQuestion: s.selectQuestion,
-    removeQuestion: s.removeQuestion,
-  }))
+  const selectQuestion = useBuilderStore((s) => s.selectQuestion)
+  const removeQuestion = useBuilderStore((s) => s.removeQuestion)
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: question.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: question.id,
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -44,8 +37,10 @@ export function SortableQuestionCard({ question, isSelected }: SortableQuestionC
       ref={setNodeRef}
       style={style}
       className={[
-        'group flex items-start gap-2 rounded-lg border bg-card p-3 cursor-pointer transition-colors',
-        isSelected ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-muted-foreground/40',
+        'group flex cursor-pointer items-start gap-2 rounded-lg border bg-card p-3 transition-colors',
+        isSelected
+          ? 'border-primary ring-1 ring-primary'
+          : 'border-border hover:border-muted-foreground/40',
         isDragging ? 'shadow-lg' : '',
       ].join(' ')}
       onClick={() => selectQuestion(question.id)}
@@ -73,22 +68,30 @@ export function SortableQuestionCard({ question, isSelected }: SortableQuestionC
           <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
             {TYPE_LABEL[question.type] ?? question.type}
           </span>
-          {question.required && (
-            <span className="text-[10px] text-destructive">Required</span>
-          )}
+          {question.required && <span className="text-[10px] text-destructive">Required</span>}
         </div>
         <p className="mt-1 truncate text-sm font-medium">
-          {question.title || <span className="text-muted-foreground italic">Untitled</span>}
+          {question.title || <span className="italic text-muted-foreground">Untitled</span>}
         </p>
       </div>
 
       {/* Delete */}
       <button
-        onClick={(e) => { e.stopPropagation(); removeQuestion(question.id) }}
-        className="mt-0.5 text-muted-foreground/0 transition-opacity group-hover:text-muted-foreground/60 hover:!text-destructive"
+        onClick={(e) => {
+          e.stopPropagation()
+          removeQuestion(question.id)
+        }}
+        className="mt-0.5 text-muted-foreground/0 transition-opacity hover:!text-destructive group-hover:text-muted-foreground/60"
         aria-label="Remove question"
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
           <path d="M2 2l10 10M12 2L2 12" />
         </svg>
       </button>

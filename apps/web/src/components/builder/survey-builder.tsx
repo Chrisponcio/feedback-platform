@@ -9,10 +9,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core'
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import { Button } from '@pulse/ui'
 import {
@@ -43,16 +40,14 @@ export function SurveyBuilder({
   initialQuestions,
   existingDistributionToken,
 }: SurveyBuilderProps) {
-  const { init, addQuestion, reorderQuestions, selectQuestion, markSaved, isDirty } =
-    useBuilderStore((s) => ({
-      init: s.init,
-      addQuestion: s.addQuestion,
-      reorderQuestions: s.reorderQuestions,
-      selectQuestion: s.selectQuestion,
-      markSaved: s.markSaved,
-      isDirty: s.isDirty,
-    }))
-
+  // Zustand v5: each selector must return a primitive or stable reference —
+  // returning a fresh object on every render causes an infinite loop.
+  const init = useBuilderStore((s) => s.init)
+  const addQuestion = useBuilderStore((s) => s.addQuestion)
+  const reorderQuestions = useBuilderStore((s) => s.reorderQuestions)
+  const selectQuestion = useBuilderStore((s) => s.selectQuestion)
+  const markSaved = useBuilderStore((s) => s.markSaved)
+  const isDirty = useBuilderStore((s) => s.isDirty)
   const questions = useBuilderStore((s) => s.questions)
   const selectedQuestionId = useBuilderStore((s) => s.selectedQuestionId)
   const selectedQuestion = questions.find((q) => q.id === selectedQuestionId) ?? null
@@ -65,12 +60,10 @@ export function SurveyBuilder({
   // Initialise store from server data on mount
   useEffect(() => {
     init(surveyId, initialSettings, initialQuestions)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
-  )
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -107,7 +100,7 @@ export function SurveyBuilder({
           <span className="text-xs text-muted-foreground">{questions.length}</span>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className="flex-1 space-y-2 overflow-y-auto p-3">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -135,9 +128,7 @@ export function SurveyBuilder({
 
           {showTypePicker && (
             <div className="rounded-lg border bg-muted/40 p-3">
-              <p className="mb-3 text-xs font-medium text-muted-foreground">
-                Choose question type
-              </p>
+              <p className="mb-3 text-xs font-medium text-muted-foreground">Choose question type</p>
               <QuestionTypePicker onSelect={handleAddQuestion} />
               <button
                 className="mt-2 w-full text-xs text-muted-foreground hover:text-foreground"
@@ -154,7 +145,10 @@ export function SurveyBuilder({
             variant="outline"
             size="sm"
             className="w-full"
-            onClick={() => { setShowTypePicker(true); selectQuestion(null) }}
+            onClick={() => {
+              setShowTypePicker(true)
+              selectQuestion(null)
+            }}
           >
             + Add question
           </Button>
@@ -184,10 +178,7 @@ export function SurveyBuilder({
           {rightPanel === 'settings' ? (
             <SurveySettingsPanel />
           ) : rightPanel === 'distribute' ? (
-            <DistributePanel
-              surveyId={surveyId}
-              existingToken={existingDistributionToken}
-            />
+            <DistributePanel surveyId={surveyId} existingToken={existingDistributionToken} />
           ) : selectedQuestion ? (
             <QuestionEditor question={selectedQuestion} allQuestions={questions} />
           ) : (
@@ -197,15 +188,9 @@ export function SurveyBuilder({
           )}
         </div>
 
-        <div className="border-t p-3 space-y-2">
-          {saveError && (
-            <p className="text-xs text-destructive">{saveError}</p>
-          )}
-          <Button
-            className="w-full"
-            onClick={handleSave}
-            disabled={isPending || !isDirty}
-          >
+        <div className="space-y-2 border-t p-3">
+          {saveError && <p className="text-xs text-destructive">{saveError}</p>}
+          <Button className="w-full" onClick={handleSave} disabled={isPending || !isDirty}>
             {isPending ? 'Saving…' : isDirty ? 'Save changes' : 'Saved'}
           </Button>
         </div>

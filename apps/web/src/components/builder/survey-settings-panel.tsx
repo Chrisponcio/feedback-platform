@@ -4,10 +4,8 @@ import { useBuilderStore } from '@/stores/builder-store'
 import { Input } from '@pulse/ui'
 
 export function SurveySettingsPanel() {
-  const { settings, updateSettings } = useBuilderStore((s) => ({
-    settings: s.settings,
-    updateSettings: s.updateSettings,
-  }))
+  const settings = useBuilderStore((s) => s.settings)
+  const updateSettings = useBuilderStore((s) => s.updateSettings)
 
   return (
     <div className="space-y-4 p-4">
