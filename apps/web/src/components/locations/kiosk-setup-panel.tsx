@@ -6,10 +6,11 @@ import { createKioskDistribution } from '@/lib/location-actions'
 interface KioskSetupPanelProps {
   locationId: string
   surveys: { id: string; title: string }[]
-  appUrl: string
+  /** @deprecated kept for backwards compatibility; URL is derived from window.location.origin at click time */
+  appUrl?: string
 }
 
-export function KioskSetupPanel({ locationId, surveys, appUrl }: KioskSetupPanelProps) {
+export function KioskSetupPanel({ locationId, surveys }: KioskSetupPanelProps) {
   const [isPending, startTransition] = useTransition()
   const [selectedSurveyId, setSelectedSurveyId] = useState(surveys[0]?.id ?? '')
   const [kioskUrl, setKioskUrl] = useState<string | null>(null)
@@ -26,7 +27,10 @@ export function KioskSetupPanel({ locationId, surveys, appUrl }: KioskSetupPanel
         return
       }
       if ('token' in result && result.token) {
-        setKioskUrl(`${appUrl}/kiosk/${result.token}`)
+        // Derive base URL from the user's actual browser origin so kiosk
+        // URLs match the domain serving the dashboard.
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+        setKioskUrl(`${baseUrl}/kiosk/${result.token}`)
       }
     })
   }
@@ -52,8 +56,12 @@ export function KioskSetupPanel({ locationId, surveys, appUrl }: KioskSetupPanel
               {copied ? 'Copied!' : 'Copy'}
             </button>
           </div>
-          <a href={kioskUrl} target="_blank" rel="noopener noreferrer"
-            className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent">
+          <a
+            href={kioskUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent"
+          >
             Open kiosk ↗
           </a>
         </div>
@@ -65,7 +73,9 @@ export function KioskSetupPanel({ locationId, surveys, appUrl }: KioskSetupPanel
             className="flex-1 rounded-md border border-input bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           >
             {surveys.map((s) => (
-              <option key={s.id} value={s.id}>{s.title}</option>
+              <option key={s.id} value={s.id}>
+                {s.title}
+              </option>
             ))}
           </select>
           <button

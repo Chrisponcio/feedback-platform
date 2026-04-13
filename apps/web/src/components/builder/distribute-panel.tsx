@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, useState } from 'react'
+import { useTransition, useState, useEffect } from 'react'
 import { Button } from '@pulse/ui'
 import { createWebDistribution, deactivateDistribution } from '@/lib/distribution-actions'
 
@@ -16,9 +16,16 @@ export function DistributePanel({ surveyId, existingToken }: DistributePanelProp
   const [error, setError] = useState<string | null>(null)
   const [qrUrl, setQrUrl] = useState<string | null>(null)
   const [qrLoading, setQrLoading] = useState(false)
+  const [appUrl, setAppUrl] = useState<string>('')
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-  const surveyUrl = token ? `${appUrl}/s/${token}` : null
+  // Derive the survey URL from the user's actual browser origin so links
+  // always match whatever domain is serving the app — avoids stale links
+  // when NEXT_PUBLIC_APP_URL points at an old Vercel deployment.
+  useEffect(() => {
+    setAppUrl(process.env.NEXT_PUBLIC_APP_URL || window.location.origin)
+  }, [])
+
+  const surveyUrl = token && appUrl ? `${appUrl}/s/${token}` : null
 
   function handleCopy() {
     if (!surveyUrl) return
@@ -31,8 +38,11 @@ export function DistributePanel({ surveyId, existingToken }: DistributePanelProp
     setError(null)
     startTransition(async () => {
       const result = await createWebDistribution(surveyId)
-      if (result.error) { setError(result.error) }
-      else if (result.token) { setToken(result.token) }
+      if (result.error) {
+        setError(result.error)
+      } else if (result.token) {
+        setToken(result.token)
+      }
     })
   }
 
@@ -97,12 +107,19 @@ export function DistributePanel({ surveyId, existingToken }: DistributePanelProp
         </label>
         <div className="flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-2">
           <span className="flex-1 truncate font-mono text-xs">{surveyUrl}</span>
-          <button onClick={handleCopy} className="shrink-0 text-xs font-medium text-primary hover:underline">
+          <button
+            onClick={handleCopy}
+            className="shrink-0 text-xs font-medium text-primary hover:underline"
+          >
             {copied ? 'Copied!' : 'Copy'}
           </button>
         </div>
-        <a href={surveyUrl ?? '#'} target="_blank" rel="noopener noreferrer"
-          className="text-xs text-muted-foreground hover:text-foreground hover:underline">
+        <a
+          href={surveyUrl ?? '#'}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+        >
           Open in new tab ↗
         </a>
       </div>
@@ -115,29 +132,46 @@ export function DistributePanel({ surveyId, existingToken }: DistributePanelProp
         {qrUrl ? (
           <div className="flex flex-col items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qrUrl} alt="Survey QR code" className="h-40 w-40 rounded-lg border bg-white p-2" />
+            <img
+              src={qrUrl}
+              alt="Survey QR code"
+              className="h-40 w-40 rounded-lg border bg-white p-2"
+            />
             <div className="flex gap-2">
-              <a href={qrUrl} download="survey-qr.png"
-                className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent">
+              <a
+                href={qrUrl}
+                download="survey-qr.png"
+                className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent"
+              >
                 Download PNG
               </a>
-              <button onClick={() => navigator.clipboard.writeText(qrUrl)}
-                className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent">
+              <button
+                onClick={() => navigator.clipboard.writeText(qrUrl)}
+                className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent"
+              >
                 Copy URL
               </button>
             </div>
           </div>
         ) : (
-          <button onClick={handleGenerateQr} disabled={qrLoading}
-            className="w-full rounded-md border border-dashed px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50">
+          <button
+            onClick={handleGenerateQr}
+            disabled={qrLoading}
+            className="w-full rounded-md border border-dashed px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+          >
             {qrLoading ? 'Generating…' : '+ Generate QR code'}
           </button>
         )}
       </div>
 
       <div className="border-t pt-4">
-        <Button variant="outline" size="sm" className="w-full text-destructive hover:text-destructive"
-          onClick={handleDeactivate} disabled={isPending}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full text-destructive hover:text-destructive"
+          onClick={handleDeactivate}
+          disabled={isPending}
+        >
           {isPending ? 'Deactivating…' : 'Deactivate link'}
         </Button>
       </div>
